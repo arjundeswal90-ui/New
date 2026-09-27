@@ -1,0 +1,128 @@
+-- Flames Avatar Copier V5 (Final Stable & Non-Glitch)
+local Players = game:GetService("Players")
+local LocalPlayer = Players.LocalPlayer
+
+local ScreenGui = Instance.new("ScreenGui")
+local MainFrame = Instance.new("Frame")
+local Title = Instance.new("TextLabel")
+local TextBox = Instance.new("TextBox")
+local CopyBtn = Instance.new("TextButton")
+local ResetBtn = Instance.new("TextButton")
+
+ScreenGui.Parent = game:GetService("CoreGui") or LocalPlayer:WaitForChild("PlayerGui")
+ScreenGui.Name = "FlamesAvatarCopierV5"
+
+MainFrame.Name = "MainFrame"
+MainFrame.Parent = ScreenGui
+MainFrame.BackgroundColor3 = Color3.fromRGB(25, 25, 25)
+MainFrame.Position = UDim2.new(0.35, 0, 0.35, 0)
+MainFrame.Size = UDim2.new(0, 300, 0, 180)
+MainFrame.Active = true
+MainFrame.Draggable = true
+
+Instance.new("UICorner", MainFrame).CornerRadius = UDim.new(0, 8)
+
+Title.Name = "Title"
+Title.Parent = MainFrame
+Title.BackgroundColor3 = Color3.fromRGB(200, 50, 50)
+Title.Size = UDim2.new(1, 0, 0, 35)
+Title.Font = Enum.Font.SourceSansBold
+Title.Text = "Flames Copier V5 (Stable)"
+Title.TextColor3 = Color3.fromRGB(255, 255, 255)
+Title.TextSize = 18.000
+
+Instance.new("UICorner", Title).CornerRadius = UDim.new(0, 8)
+
+TextBox.Parent = MainFrame
+TextBox.BackgroundColor3 = Color3.fromRGB(40, 40, 40)
+TextBox.Position = UDim2.new(0.1, 0, 0.3, 0)
+TextBox.Size = UDim2.new(0.8, 0, 0, 35)
+TextBox.Font = Enum.Font.SourceSans
+TextBox.PlaceholderText = "Target Username..."
+TextBox.Text = ""
+TextBox.TextColor3 = Color3.fromRGB(255, 255, 255)
+TextBox.TextSize = 16.000
+
+Instance.new("UICorner", TextBox)
+
+CopyBtn.Name = "CopyBtn"
+CopyBtn.Parent = MainFrame
+CopyBtn.BackgroundColor3 = Color3.fromRGB(0, 170, 100)
+CopyBtn.Position = UDim2.new(0.1, 0, 0.6, 0)
+CopyBtn.Size = UDim2.new(0.38, 0, 0, 35)
+CopyBtn.Font = Enum.Font.SourceSansBold
+CopyBtn.Text = "Copy Outfit"
+CopyBtn.TextColor3 = Color3.fromRGB(255, 255, 255)
+CopyBtn.TextSize = 16.000
+
+Instance.new("UICorner", CopyBtn)
+
+ResetBtn.Name = "ResetBtn"
+ResetBtn.Parent = MainFrame
+ResetBtn.BackgroundColor3 = Color3.fromRGB(180, 50, 50)
+ResetBtn.Position = UDim2.new(0.52, 0, 0.6, 0)
+ResetBtn.Size = UDim2.new(0.38, 0, 0, 35)
+ResetBtn.Font = Enum.Font.SourceSansBold
+ResetBtn.Text = "Reset Avatar"
+ResetBtn.TextColor3 = Color3.fromRGB(255, 255, 255)
+ResetBtn.TextSize = 16.000
+
+Instance.new("UICorner", ResetBtn)
+
+local function getTargetPlayer(nameText)
+	nameText = nameText:lower():gsub("%s+", "")
+	for _, p in pairs(Players:GetPlayers()) do
+		if p.Name:lower():sub(1, #nameText) == nameText or p.DisplayName:lower():sub(1, #nameText) == nameText then
+			return p
+		end
+	end
+	return nil
+end
+
+local function applyCleanOutfit(userId)
+	local myChar = LocalPlayer.Character
+	if not myChar or not myChar:FindFirstChild("Humanoid") then return end
+
+	local myHum = myChar.Humanoid
+
+	-- Fetch target description directly from Roblox API
+	local success, targetDesc = pcall(function()
+		return Players:GetHumanoidDescriptionFromUserId(userId)
+	end)
+
+	if success and targetDesc then
+		-- Safe accessories cleanup (prevents grounding/physics glitch)
+		for _, v in pairs(myChar:GetChildren()) do
+			if v:IsA("Accessory") or v:IsA("Shirt") or v:IsA("Pants") or v:IsA("ShirtGraphic") or v:IsA("BodyColors") or v:IsA("CharacterMesh") then
+				v:Destroy()
+			end
+		end
+
+		task.wait(0.1)
+
+		-- Apply full humanoid description safely
+		pcall(function()
+			myHum:ApplyDescriptionClientServer(targetDesc)
+		end)
+		
+		pcall(function()
+			myHum:ApplyDescription(targetDesc)
+		end)
+	else
+		TextBox.Text = "Failed to Fetch API!"
+	end
+end
+
+CopyBtn.MouseButton1Click:Connect(function()
+	local target = getTargetPlayer(TextBox.Text)
+	if target then
+		TextBox.Text = target.Name
+		applyCleanOutfit(target.UserId)
+	else
+		TextBox.Text = "Player Not Found!"
+	end
+end)
+
+ResetBtn.MouseButton1Click:Connect(function()
+	applyCleanOutfit(LocalPlayer.UserId)
+end)
